@@ -53,10 +53,7 @@
 (comment
   (scope :audio-bus 1)
   (def bass-state (atom {}))
-  (def bass-player
-    (setup-inst bass-patch bass-mapping bass-state))
+  (def bass-midi-player
+    (setup-inst-midi bass-patch bass-mapping bass-state))
   (midi-player-stop bass-player)
   (comment))
-
-(comment
-  (overtone.inst.synth/bass))

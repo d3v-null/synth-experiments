@@ -15,23 +15,9 @@
     71 [:sustain divide127]})
 
 (comment
-  (def piano-state (atom {}))
-  (def piano-player
-    (setup-inst piano piano-mapping piano-state))
-  (midi-player-stop piano-player)
-  (comment))
-
-(comment
-  ;; how to use midi
-  (definst sinder [note 60 amp 0.5 exp 0.5 gate 1]
-    (let [freq (midicps note)]
-      (-> (sin-osc freq)
-          (* (env-gen (adsr 0.1) gate :action FREE))
-          (* amp exp))))
-  (def sinder-state (atom {}))
-  (def sinder-mapping
-    {10 [:exp divide127]})
-  (def sinder-player
-    (setup-inst sinder sinder-mapping sinder-state))
-  (midi-player-stop sinder-player)
+  (def piano-state (atom {:sustain 0.0}))
+  (def piano-midi-player
+    (setup-inst-midi piano piano-mapping piano-state))
+  (swap! piano-state assoc :sustain 1.0)
+  (midi-player-stop piano-midi-player)
   (comment))

@@ -43,7 +43,7 @@
 
 (def kick-melody
   (->>
-   (phrase (take 4 (repeat 1/4)) (take 4 (repeat 0)))
+   (phrase (repeat 4 1/4) (repeat 4 0))
    (all :part :kick)))
 
 (defmethod live/play-note :clap [{midi :pitch dur :duration}]
@@ -65,10 +65,6 @@
  (live/stop))
 
 ;; BASS
-
-; (import-recent-values
-;   {70 89, 74 116, 20 120, 72 68, 15 35, 75 4, 13 64, 17 28, 12 5, 19 26,
-;    11 127, 14 30, 16 0, 73 59, 18 95, 71 67})
 
 (definst passive-bass-patch
   [ note {:default 60 :min 0 :max 127 :step 1}
@@ -98,39 +94,67 @@
         (rlpf lpf-sig q)
         (* amp-env))))
 
-(def passive-bass-knobs
+(def bass-mapping
   {
-    :detune 73
-    ; :dephase 11
-    :q 11
-    :cutoff 74
-    :mix 71
-    :lpf-att 12
-    :lpf-dec 13
-    :lpf-sus 14
-    :lpf-rel 15
-    :amp-att 16
-    :amp-dec 17
-    :amp-sus 18
-    :amp-rel 19
-    :exp 20})
+    73 [:detune   divide127]
+    11 [:q        divide127]
+    74 [:cutoff   divide127]
+    71 [:mix      divide127]
+    12 [:lpf-att  inv-divide127]
+    13 [:lpf-dec  inv-divide127]
+    14 [:lpf-sus  inv-divide127]
+    15 [:lpf-rel  inv-divide127]
+    16 [:amp-att  inv-divide127]
+    17 [:amp-dec  inv-divide127]
+    18 [:amp-sus  inv-divide127]
+    19 [:amp-rel  inv-divide127]
+    20 [:exp      inv-divide127]})
 
-(def passive-bass-atom (atom nil))
-(def passive-bass-midi-atom (atom nil))
+; (import-recent-values
+;   {70 89, 74 116, 20 120, 72 68, 15 35, 75 4, 13 64, 17 28, 12 5, 19 26,
+;    11 127, 14 30, 16 0, 73 59, 18 95, 71 67})
 
 ; (@passive-bass-atom :note 60 :amp 0.5 :velocity 10)
 
 (comment
+  (def bass-state
+    (atom {:cutoff  (/ 116 127)
+           :exp     (/ 120 127)
+           :lpf-att (/   5 127)
+           :lpf-rel (/  35 127)
+           :lpf-sus (/  30 127)
+           :lpf-dec (/  64 127)
+           :amp-att (/   0 127)
+           :amp-dec (/  27 127)
+           :amp-sus (/  95 127)
+           :amp-rel (/  26 127)
+           :q       (/  11 127)
+           :detune  (/  59 127)
+           :mix     (/  67 127)}))
   (scope :audio-bus 1)
-  (setup-inst passive-bass-patch passive-bass-knobs
-              passive-bass-atom passive-bass-midi-atom)
-  (midi-player-stop @passive-bass-midi-atom)
+  (def bass-midi-player
+    (setup-inst-midi passive-bass-patch bass-mapping bass-state))
+  (midi-player-stop bass-midi-player)
+  (stop)
   (comment))
 
 (def passive-bass-melody
   (->>
-   (phrase [0, -1,  1, 2]
-           [1,  1,  1, 1])
-   (all :part :bass)))
+   (phrase [7, 1/2, 9/2, 4]
+           [0,  -1,   1, 2])
+   (all :velocity 127)
+   (all :part :bass)
+   (where :pitch (comp (scale/from -36) scale/B scale/blues))))
 
-(defmethod live/play-note :bass [{midi :pitch dur :duration}])
+(->>
+  (with clap-melody kick-melody)
+  (with passive-bass-melody)
+  (tempo (bpm 120))
+  live/play)
+
+(def bass-lein-player
+  (setup-inst-lein passive-bass-patch bass-mapping bass-state))
+
+(defmethod live/play-note :bass [{midi :pitch dur :duration vel :velocity :as msg}]
+  (println "message" msg)
+  (bass-lein-player msg))

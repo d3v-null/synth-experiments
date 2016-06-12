@@ -27,7 +27,7 @@
 
 (comment
   (def filter-state (atom {}))
-  (def filter-player
-    (setup-inst filter-patch filter-mapping filter-state))
+  (def filter-midi-player
+    (setup-inst-midi filter-patch filter-mapping filter-state))
   (midi-player-stop filter-player)
   (comment))

@@ -1,8 +1,10 @@
 (ns synth-experiments.midi
   (:require [overtone.live :refer :all
-             :rename {midi-inst-controller bad-midi-inst-controller}]))
+             :rename {midi-inst-controller bad-midi-inst-controller}]
+            [overtone.at-at :as at-at]
+            [overtone.midi :as midi]))
 
-(defn midi-control-handler
+(defn- midi-control-handler
   [state-atom handler mapping msg]
   (let [note (:note msg)]
     (when (contains? mapping note)
@@ -22,7 +24,7 @@
    sinder-mapping
    {:note 10 :velocity 75}))
 
-(defn midi-inst-controller
+(defn midi-inst-controller-good
   "overrides broken midi-inst-controller from Overtone"
   [state-atom handler mapping]
   (let [ctl-key (keyword (gensym 'control-change))]
@@ -30,19 +32,35 @@
               #(midi-control-handler state-atom handler mapping %)
               ctl-key)))
 
-(defn setup-inst
+(defn get-midi-player
   [ctl-inst mapping state-atom]
-  (midi-inst-controller state-atom (partial ctl ctl-inst) mapping)
-  (let [inst-player
-        (fn [& {note :note amp :amp vel :velocity}]
-            (let [play-params
-                  (reduce-kv
-                    (fn [params param value]
-                      (into params [param value]))
-                    [note :amp amp :velocity vel]
-                    @state-atom)]
-              (apply ctl-inst play-params)))]
-    (midi-poly-player inst-player)))
+  (fn [& {note :note amp :amp vel :velocity}]
+      (let [ play-params [note :amp amp :velocity vel]
+             play-params
+              (reduce-kv
+                (fn [params param value]
+                  (into params [param value]))
+                play-params
+                @state-atom)]
+          (apply ctl-inst play-params))))
+
+(defn setup-inst-midi
+  [ctl-inst mapping state-atom]
+  (midi-inst-controller-good state-atom (partial ctl ctl-inst) mapping)
+  (midi-poly-player (get-midi-player ctl-inst mapping state-atom)))
+
+(def midi-player-pool-good (at-at/mk-pool))
+
+(defn setup-inst-lein
+  [ctl-inst mapping state-atom]
+  (fn [{note :pitch vel :velocity seconds :duration :as msg}]
+    (println "lein playing message" msg)
+    (let
+      [amp (/ vel 127)
+       midi-player (get-midi-player ctl-inst mapping state-atom)
+       node (midi-player :note note :amp amp :velocity vel)
+       msecs (* seconds 1000)]
+      (at-at/after msecs #(node-control node [:gate 0]) midi-player-pool-good))))
 
 (def divide127 #(/ % 127.0))
 (def inv-divide127 #(- 1 (/ % 127.0)))
@@ -54,12 +72,17 @@
       (-> (sin-osc freq)
           (* (env-gen (adsr 0.1) gate :action FREE))
           (* amp exp))))
-  (def sinder-state (atom {}))
+  (def sinder-state (atom {:exp 0.9}))
   (def sinder-mapping
     {10 [:exp divide127]})
-  (def sinder-player
-    (setup-inst sinder sinder-mapping sinder-state))
-  (midi-player-stop sinder-player)
+  (def sinder-midi-player
+    (setup-inst-midi sinder sinder-mapping sinder-state))
+  (swap! sinder-state assoc :exp 0.1)
+  (midi-player-stop sinder-midi-player)
+  (def sinder-lein-player
+    (setup-inst-lein sinder sinder-mapping sinder-state))
+  (sinder-lein-player {:pitch 70 :velocity 100 :duration 100})
+  (stop)
   (comment))
 
 
@@ -97,12 +120,14 @@
     82 [:c31 divide127]
     83 [:c32 divide127]
     80 [:c33 divide127]
-    12 [:f1 divide127]
-    13 [:f2 divide127]
-    14 [:f3 divide127]
-    15 [:f4 divide127]
-    16 [:f5 divide127]
-    17 [:f6 divide127]
-    18 [:f7 divide127]
-    19 [:f8 divide127]
-    20 [:f9 divide127]})
+    12 [:f1 inv-divide127]
+    13 [:f2 inv-divide127]
+    14 [:f3 inv-divide127]
+    15 [:f4 inv-divide127]
+    16 [:f5 inv-divide127]
+    17 [:f6 inv-divide127]
+    18 [:f7 inv-divide127]
+    19 [:f8 inv-divide127]
+    20 [:f9 inv-divide127]})
+
+(midi/midi-in)

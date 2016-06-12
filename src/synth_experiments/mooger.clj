@@ -31,19 +31,19 @@
         filt       (moog-ff (+ s1 s2) (* 20000 cutoff f-env) 3)]
     (* amp filt)))
 
-(def mooger-keys
-  { :osc1-level 10
-    :osc2-level 11
-    :fattack 91
-    :frelease 93
-    :attack 73
-    :release 72
-    :cutoff 74})
+(def mooger-mapping
+  { 10 [:osc1-level divide127]
+    11 [:osc2-level divide127]
+    91 [:fattack divide127]
+    93 [:frelease divide127]
+    73 [:attack divide127]
+    72 [:release divide127]
+    74 [:cutoff divide127]})
     ; :res 71})
 
 (comment
-  (def mooger-player-atom (atom nil))
-  (def mooger-midi-fn (atom nil))
-  (setup-inst mooger mooger-keys mooger-player-atom mooger-midi-fn)
-  (midi-player-stop @mooger-midi-fn)
+  (def mooger-state (atom {}))
+  (def mooger-midi-player
+    (setup-inst-midi mooger mooger-mapping mooger-state))
+  (midi-player-stop mooger-midi-player)
   (comment))

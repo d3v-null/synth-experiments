@@ -29,7 +29,7 @@
 
 (comment
   (def violin-state (atom {}))
-  (def violin-player
-    (setup-inst violin-patch violin-mapping violin-state))
-  (midi-player-stop violin-player)
+  (def violin-midi-player
+    (setup-inst-midi violin-patch violin-mapping violin-state))
+  (midi-player-stop violin-midi-player)
   (comment))
