@@ -20,17 +20,14 @@
         (resonz freq q)
         (* amp-env))))
 
-(def filter-knobs
-  {
-    :q 11
-    :amp-att 73
-    :amp-rel 72})
-
-(def filter-atom (atom nil))
-(def filter-midi-atom (atom nil))
+(def filter-mapping
+  {11 [:q divide127]
+   73 [:amp-att divide127]
+   72 [:amp-rel divide127]})
 
 (comment
-  (scope :audio-bus 1)
-  (setup-inst filter-patch filter-knobs filter-atom filter-midi-atom)
-  (midi-player-stop @filter-midi-atom)
+  (def filter-state (atom {}))
+  (def filter-player
+    (setup-inst filter-patch filter-mapping filter-state))
+  (midi-player-stop filter-player)
   (comment))

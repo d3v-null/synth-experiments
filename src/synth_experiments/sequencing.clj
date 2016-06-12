@@ -1,7 +1,6 @@
 (ns synth-experiments.sequencing
   (:require
-   [overtone.live :refer :all
-              :rename {midi-inst-controller bad-midi-inst-controller}]
+
    [leipzig.melody :refer [bpm is all phrase then times tempo where wherever with mapthen]]
    [leipzig.scale :refer [lower]]
    [leipzig.scale :as scale]
@@ -10,10 +9,8 @@
    [leipzig.temperament :as temperament]
    [overtone.studio.scope :as scope]
    [overtone.inst.synth :refer :all]
-   [overtone.inst.drum :refer :all]
-   [clj-time.format :as f]
-   [clj-time.core :as t]
-   [clj-time.local :as l]))
+   [overtone.inst.drum :refer :all]))
+
 
 
 ;;; PERCUSSION
@@ -116,11 +113,3 @@
 (comment
   (live/jam (var perc-part))
   (live/stop))
-
-(defn get-time-str []
-  (f/unparse (f/formatter "yyyyMMddhhmmss") (l/local-now)))
-
-(comment
-  (recording-start
-    (clojure.string/join ["~/Music/overtone/test" (get-time-str) ".wav"]))
-  (recording-stop))
