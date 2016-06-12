@@ -1,6 +1,7 @@
 (ns synth-experiments.sequencing
-  (:use [overtone.live])
   (:require
+   [overtone.live :refer :all
+              :rename {midi-inst-controller bad-midi-inst-controller}]
    [leipzig.melody :refer [bpm is all phrase then times tempo where wherever with mapthen]]
    [leipzig.scale :refer [lower]]
    [leipzig.scale :as scale]

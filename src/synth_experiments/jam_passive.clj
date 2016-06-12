@@ -1,6 +1,7 @@
 (ns synth-experiments.jam-passive
-  (:use [overtone.live])
   (:require
+   [overtone.live :refer :all
+              :rename {midi-inst-controller bad-midi-inst-controller}]
    [leipzig.melody :refer [bpm is all phrase then times tempo where wherever with mapthen]]
    [leipzig.scale :refer [lower]]
    [leipzig.scale :as scale]
@@ -65,22 +66,23 @@
 
 ;; BASS
 
-(import-recent-values
-  {70 89, 74 116, 20 120, 72 68, 15 35, 75 4, 13 64, 17 28, 12 5, 19 26,
-   11 127, 14 30, 16 0, 73 59, 18 95, 71 67})
+; (import-recent-values
+;   {70 89, 74 116, 20 120, 72 68, 15 35, 75 4, 13 64, 17 28, 12 5, 19 26,
+;    11 127, 14 30, 16 0, 73 59, 18 95, 71 67})
 
-(definst passive-bass-patch  [note {:default 60 :min 0 :max 127 :step 1}]
-                      amp {:default 0.5 :min 0.0 :max 1.0}
-                      exp {:default 0.8 :min 0.0 :max 1.0}
-                      ;; 0 -> detune down by 1/2 semi, 1 -> detune up...
-                      detune {:default 0.6 :min 0.0 :max 1.0}
-                      ; dephase {:default 0.5 :min 0.0 :max 1.0}
-                      amp-att 0.2 amp-dec 0.2 amp-sus 0.6 amp-rel 0.2
-                      lpf-att 0.5 lpf-dec 0.2 lpf-sus 0.4 lpf-rel 0.2
-                      cutoff 0.4
-                      mix 0.5
-                      q 0.5
-                      gate 1
+(definst passive-bass-patch
+  [ note {:default 60 :min 0 :max 127 :step 1}
+    amp {:default 0.5 :min 0.0 :max 1.0}
+    exp {:default 0.8 :min 0.0 :max 1.0}
+    ;; 0 -> detune down by 1/2 semi, 1 -> detune up...
+    detune {:default 0.6 :min 0.0 :max 1.0}
+    ; dephase {:default 0.5 :min 0.0 :max 1.0}
+    amp-att 0.2 amp-dec 0.2 amp-sus 0.6 amp-rel 0.2
+    lpf-att 0.5 lpf-dec 0.2 lpf-sus 0.4 lpf-rel 0.2
+    cutoff 0.4
+    mix 0.5
+    q 0.5
+    gate 1]
   (let [freq1 (midicps note)
         freq2 (midicps (+ note detune -0.5))
         amp-env (env-gen (adsr amp-att :release amp-rel :level amp)
@@ -116,7 +118,7 @@
 (def passive-bass-atom (atom nil))
 (def passive-bass-midi-atom (atom nil))
 
-(@passive-bass-atom :note 60 :amp 0.5 :vel 10)
+; (@passive-bass-atom :note 60 :amp 0.5 :velocity 10)
 
 (comment
   (scope :audio-bus 1)
@@ -124,3 +126,11 @@
               passive-bass-atom passive-bass-midi-atom)
   (midi-player-stop @passive-bass-midi-atom)
   (comment))
+
+(def passive-bass-melody
+  (->>
+   (phrase [0, -1,  1, 2]
+           [1,  1,  1, 1])
+   (all :part :bass)))
+
+(defmethod live/play-note :bass [{midi :pitch dur :duration}])

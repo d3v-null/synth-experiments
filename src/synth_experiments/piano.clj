@@ -1,5 +1,6 @@
 (ns synth-experiments.piano
-  (:require [overtone.live :refer :all]
+  (:require [overtone.live :refer :all
+             :rename {midi-inst-controller bad-midi-inst-controller}]
             [synth-experiments.midi :refer :all]
             [overtone.inst.piano :refer :all]))
 

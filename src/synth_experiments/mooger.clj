@@ -1,5 +1,6 @@
 (ns synth-experiments.mooger
-  (:require [overtone.live :refer :all]
+  (:require [overtone.live :refer :all
+             :rename {midi-inst-controller bad-midi-inst-controller}]
             [synth-experiments.midi :refer :all]))
 
 (definst mooger
@@ -46,8 +47,3 @@
   (setup-inst mooger mooger-keys mooger-player-atom mooger-midi-fn)
   (midi-player-stop @mooger-midi-fn)
   (comment))
-
-
-(update-recent-value :osc1 1)
-
-(ctl mooger :osc1 2)

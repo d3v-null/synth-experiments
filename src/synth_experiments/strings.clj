@@ -1,5 +1,6 @@
 (ns synth-experiments.strings
-    (:require [/overtone.live :refer :all]
+    (:require [overtone.live :refer :all
+               :rename {midi-inst-controller bad-midi-inst-controller}]
               [synth-experiments.midi :refer :all]))
 
 (definst violin-patch [note 60 amp 0.5 exp 0.4 gate 1

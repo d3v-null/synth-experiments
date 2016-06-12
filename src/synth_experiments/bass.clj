@@ -1,5 +1,6 @@
 (ns synth-experiments.bass
-    (:require [overtone.live :refer :all]
+    (:require [overtone.live :refer :all
+               :rename {midi-inst-controller bad-midi-inst-controller}]
               [synth-experiments.midi :refer :all]
               [overtone.studio.scope :refer :all]
               [overtone.inst.synth :refer :all]))
@@ -33,42 +34,28 @@
         (rlpf lpf-sig q)
         (* amp-env))))
 
-; (def bass-knobs
-;   {
-;     :detune 10
-;     ; :dephase 11
-;     :q 11
-;     :lpf-att 91
-;     :lpf-rel 93
-;     :amp-att 73
-;     :amp-rel 72
-;     :cutoff 74
-;     :mix 71})
-
-(def bass-knobs
+(def bass-mapping
   {
-    :detune 73
-    ; :dephase 11
-    :q 11
-    :cutoff 74
-    :mix 71
-    :lpf-att 12
-    :lpf-dec 13
-    :lpf-sus 14
-    :lpf-rel 15
-    :amp-att 16
-    :amp-dec 17
-    :amp-sus 18
-    :amp-rel 19
-    :exp 20})
-
-(def bass-atom (atom nil))
-(def bass-midi-atom (atom nil))
+    73 [:detune   divide127]
+    11 [:q        divide127]
+    74 [:cutoff   divide127]
+    71 [:mix      divide127]
+    12 [:lpf-att  inv-divide127]
+    13 [:lpf-dec  inv-divide127]
+    14 [:lpf-sus  inv-divide127]
+    15 [:lpf-rel  inv-divide127]
+    16 [:amp-att  inv-divide127]
+    17 [:amp-dec  inv-divide127]
+    18 [:amp-sus  inv-divide127]
+    19 [:amp-rel  inv-divide127]
+    20 [:exp      inv-divide127]})
 
 (comment
   (scope :audio-bus 1)
-  (setup-inst bass-patch bass-knobs bass-atom bass-midi-atom)
-  (midi-player-stop @bass-midi-atom)
+  (def bass-state (atom {}))
+  (def bass-player
+    (setup-inst bass-patch bass-mapping bass-state))
+  (midi-player-stop bass-player)
   (comment))
 
 (comment

@@ -1,5 +1,6 @@
 (ns synth-experiments.filters
-    (:require [overtone.live :refer :all]
+    (:require [overtone.live :refer :all
+               :rename {midi-inst-controller bad-midi-inst-controller}]
               [synth-experiments.midi :refer :all]
               [overtone.studio.scope :refer :all]
               [overtone.inst.synth :refer :all]))
