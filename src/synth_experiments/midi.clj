@@ -2,7 +2,8 @@
   (:require [overtone.live :refer :all
              :rename {midi-inst-controller bad-midi-inst-controller}]
             [overtone.at-at :as at-at]
-            [overtone.midi :as midi]))
+            [overtone.midi :as midi]
+            [overtone.studio.scope :refer :all]))
 
 (defn- midi-control-handler
   [state-atom handler mapping msg]
@@ -12,17 +13,6 @@
             ctl-val (scale-fn (:velocity msg))]
         (swap! state-atom assoc ctl-name ctl-val)
         (handler ctl-name ctl-val)))))
-
-(comment
-  (def sinder-state (atom {}))
-  (def sinder-mapping
-    {10 [:exp #(/ % 127.0)]})
-  (println @sinder-state)
-  (midi-control-handler
-   sinder-state
-   (partial println)
-   sinder-mapping
-   {:note 10 :velocity 75}))
 
 (defn midi-inst-controller-good
   "overrides broken midi-inst-controller from Overtone"
@@ -65,13 +55,16 @@
 (def divide127 #(/ % 127.0))
 (def inv-divide127 #(- 1 (/ % 127.0)))
 
+(definst sinder [note 60 amp 0.5 exp 0.5 gate 1]
+  (let [freq (midicps note)
+        lvl (* amp exp)
+        env-amp (env-gen (adsr 0.1 :level lvl) gate :action FREE)]
+    (-> (sin-osc freq)
+        (* env-amp))))
+
 (comment
   ;; how to use midi
-  (definst sinder [note 60 amp 0.5 exp 0.5 gate 1]
-    (let [freq (midicps note)]
-      (-> (sin-osc freq)
-          (* (env-gen (adsr 0.1) gate :action FREE))
-          (* amp exp))))
+  (scope :audio-bus 1)
   (def sinder-state (atom {:exp 0.9}))
   (def sinder-mapping
     {10 [:exp divide127]})
@@ -129,5 +122,3 @@
     18 [:f7 inv-divide127]
     19 [:f8 inv-divide127]
     20 [:f9 inv-divide127]})
-
-(midi/midi-in)

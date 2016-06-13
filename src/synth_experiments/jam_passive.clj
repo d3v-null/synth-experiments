@@ -11,7 +11,8 @@
    [overtone.studio.scope :as scope]
    [overtone.inst.synth :refer :all]
    [overtone.inst.drum :refer :all]
-   [synth-experiments.midi :refer :all]))
+   [synth-experiments.midi :refer :all]
+   [synth-experiments.recording :refer :all]))
 
 ;;; PERCUSSION
 
@@ -34,18 +35,6 @@
 ;; (noise-snare)
 (def my-snare noise-snare)
 
-
-(def clap-melody
-  (->>
-   (phrase [1/4 1/2 1/4 1/2 1/4 1/4]
-           [1   nil 1   nil  1  nil])
-   (all :part :clap)))
-
-(def kick-melody
-  (->>
-   (phrase (repeat 4 1/4) (repeat 4 0))
-   (all :part :kick)))
-
 (defmethod live/play-note :clap [{midi :pitch dur :duration}]
   (if (number? midi)
       (clap)))
@@ -54,6 +43,34 @@
     (if (zero? midi)
       (my-hard-kick)
       (my-soft-kick))))
+(defmethod live/play-note :metronome [{midi :pitch dur :duration}]
+  (kick))
+
+(def clap-melody
+  (->>
+   (phrase (cycle [1/4 1/2 1/4 1/2 1/4 1/4])
+           (cycle [1   nil 1   nil  1  nil]))
+   (all :part :clap)))
+
+(def metronome-melody
+  (->>
+   (phrase (take 4 (repeat 1))
+           (take 4 (repeat 1)))
+   (all :part :metronome)))
+
+
+(comment
+  (live/play (->> clap-melody
+                  (with metronome)
+                  (tempo (bpm 120))))
+  (live/stop))
+
+
+
+(def kick-melody
+  (->>
+   (phrase (concat (repeat 4 1/4) [3]) (concat (repeat 16 0) [nil]))
+   (all :part :kick)))
 
 (def perc-part
   (->>
@@ -68,7 +85,6 @@
 
 (definst passive-bass-patch
   [ note {:default 60 :min 0 :max 127 :step 1}
-    amp {:default 0.5 :min 0.0 :max 1.0}
     exp {:default 0.8 :min 0.0 :max 1.0}
     ;; 0 -> detune down by 1/2 semi, 1 -> detune up...
     detune {:default 0.6 :min 0.0 :max 1.0}
@@ -81,7 +97,7 @@
     gate 1]
   (let [freq1 (midicps note)
         freq2 (midicps (+ note detune -0.5))
-        amp-env (env-gen (adsr amp-att :release amp-rel :level amp)
+        amp-env (env-gen (adsr amp-att amp-dec amp-sus amp-dec amp-rel :level exp)
                          :gate gate :action FREE)
         ; phase2 (- dephase 0.5)
         phase2 0
@@ -110,33 +126,34 @@
     19 [:amp-rel  inv-divide127]
     20 [:exp      inv-divide127]})
 
-; (import-recent-values
-;   {70 89, 74 116, 20 120, 72 68, 15 35, 75 4, 13 64, 17 28, 12 5, 19 26,
-;    11 127, 14 30, 16 0, 73 59, 18 95, 71 67})
-
-; (@passive-bass-atom :note 60 :amp 0.5 :velocity 10)
+(def bass-state
+  (atom {:cutoff  (/ 116 127)
+         :exp     (/ 120 127)
+         :lpf-att (/   5 127)
+         :lpf-rel (/  35 127)
+         :lpf-sus (/  30 127)
+         :lpf-dec (/  64 127)
+         :amp-att (/   0 127)
+         :amp-dec (/  27 127)
+         :amp-sus (/  95 127)
+         :amp-rel (/  26 127)
+         :q       (/  11 127)
+         :detune  (/  59 127)
+         :mix     (/  67 127)}))
 
 (comment
-  (def bass-state
-    (atom {:cutoff  (/ 116 127)
-           :exp     (/ 120 127)
-           :lpf-att (/   5 127)
-           :lpf-rel (/  35 127)
-           :lpf-sus (/  30 127)
-           :lpf-dec (/  64 127)
-           :amp-att (/   0 127)
-           :amp-dec (/  27 127)
-           :amp-sus (/  95 127)
-           :amp-rel (/  26 127)
-           :q       (/  11 127)
-           :detune  (/  59 127)
-           :mix     (/  67 127)}))
-  (scope :audio-bus 1)
   (def bass-midi-player
     (setup-inst-midi passive-bass-patch bass-mapping bass-state))
   (midi-player-stop bass-midi-player)
+  (println bass-state)
   (stop)
   (comment))
+
+(def bass-lein-player
+  (setup-inst-lein passive-bass-patch bass-mapping bass-state))
+
+(defmethod live/play-note :bass [{midi :pitch dur :duration vel :velocity :as msg}]
+  (bass-lein-player msg))
 
 (def passive-bass-melody
   (->>
@@ -146,15 +163,14 @@
    (all :part :bass)
    (where :pitch (comp (scale/from -36) scale/B scale/blues))))
 
-(->>
-  (with clap-melody kick-melody)
-  (with passive-bass-melody)
-  (tempo (bpm 120))
-  live/play)
+(def passive-drum-bass
+  (->>
+    (with clap-melody kick-melody)
+    (with passive-bass-melody)
+    (tempo (bpm 120))))
 
-(def bass-lein-player
-  (setup-inst-lein passive-bass-patch bass-mapping bass-state))
-
-(defmethod live/play-note :bass [{midi :pitch dur :duration vel :velocity :as msg}]
-  (println "message" msg)
-  (bass-lein-player msg))
+(comment
+  (live/jam (var passive-drum-bass))
+  (start-recording)
+  (live/stop)
+  (stop-recording))

@@ -1,4 +1,4 @@
-(ns synth_experiments.recording
+(ns synth-experiments.recording
   (:require [overtone.live :refer [recording-start recording-stop]]
             [clj-time.format :as f]
             [clj-time.core :as t]
