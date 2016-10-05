@@ -25,6 +25,7 @@
 (defn get-midi-player
   [ctl-inst mapping state-atom]
   (fn [& {note :note amp :amp vel :velocity}]
+      (println note amp)
       (let [ play-params [note :amp amp :velocity vel]
              play-params
               (reduce-kv
