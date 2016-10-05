@@ -38,7 +38,7 @@
   (->>
    (phrase (take 16 (repeat 1/2))
            (interleave (repeat nil) (cycle [nil nil nil 0])))
-   (all :part :hat)))
+   (all :part :crash)))
 
 (def BPM 120)
 
@@ -47,21 +47,57 @@
    (with kick-melody snare-melody hat-melody crash-melody)
    (tempo (bpm BPM))))
 
-(let [receiver (first (midi-connected-receivers))]
-  (assert (= (:description receiver) "Circuit") "Not sending to Circuit")
+
+;;  |1e&a2e&a3e&a4e&a|1e&a2e&a3e&a4e&a|
+;;+3|----------------|------0---------|
+;;+2|------------0---|----0---0-------|
+;;+1|----------------|----------------|
+;;+0|0-------0-------|0-----------0---|
+;;-1|------0---------|----------------|
+;;-2|----------------|----------------|
+;;-3|----0-----------|----------------|
+
+(def progression [0 0 3 0 4 0])
+
+(defn bassline [root]
+  (->> (phrase (cycle [1 1/2 1/2 1 1]) [0 -3 -1 0 2 0 2 3 2 0])
+       (where :pitch (scale/from root))
+       (where :pitch (comp scale/lower scale/lower))
+       (all :part :bass)))
+
+(def bass-part
+  (->>
+   (mapthen bassline progression)
+   (where :pitch (comp scale/B scale/minor))
+   (tempo (bpm BPM))))
+
+(let [receiver (first (filter #(= (:description %) "Circuit")
+                              (studio_midi/midi-connected-receivers)))]
+  ; (assert (= (:description receiver) "Circuit") "Not sending to Circuit")
   (defmethod live/play-note :kick [{midi :pitch dur :duration}]
     (if (number? midi)
-      (overtone.midi/midi-note receiver 60 100 dur 9)))
+      (studio_midi/midi-note receiver 60 100 (* 900 dur) 9)))
   (defmethod live/play-note :snare [{midi :pitch dur :duration}]
     (if (number? midi)
-      (overtone.midi/midi-note receiver 62 100 dur 9)))
+      (studio_midi/midi-note receiver 62 100 (* 900 dur) 9)))
   (defmethod live/play-note :hat [{midi :pitch dur :duration}]
     (if (number? midi)
-      (overtone.midi/midi-note receiver 64 100 dur 9)))
+      (studio_midi/midi-note receiver 64 100 (* 900 dur) 9)))
   (defmethod live/play-note :crash [{midi :pitch dur :duration}]
     (if (number? midi)
-      (overtone.midi/midi-note receiver 65 100 dur 9)))
-  (comment)
+      (studio_midi/midi-note receiver 65 100 (* 900 dur) 9)))
+  (defmethod live/play-note :bass [{midi :pitch dur :duration}]
+    (if (number? midi)
+      (studio_midi/midi-note receiver midi 100 (* 900 dur) 0))))
+
+(def track
+  (->>
+   bass-part
+   (with (times (count progression) perc-part))))
+
+(comment
+  (live/jam (var track))
   (live/jam (var perc-part))
-  (comment
-   (live/stop)))
+  (live/jam (var bass-part)))
+(comment
+ (live/stop))
