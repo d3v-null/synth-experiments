@@ -42,7 +42,7 @@
   (->>
    ()
    (then (times 7 (phrase [1/2 1/2]       [nil 0])))
-   (then (times 1 (phrase [1]       [nil])))
+   (then (times 1 (phrase [1]             [nil])))
    (all :part :hat)))
 
 (def crash-melody-only
@@ -87,14 +87,14 @@
   (->>
    ()
    (then (times 7 (phrase [1/2 1/2]       [nil 0])))
-   (then (times 1 (phrase [1]       [nil])))
+   (then (times 1 (phrase [1]             [nil])))
    (all :part :hat)))
 
 (def crash-melody-generic
   (->>
    ()
    (then (times 7 (phrase [1] [nil])))
-   (then (times 1 (phrase [1/2 1/2] [nil 0])))
+   (then (times 1 (phrase [1/2 1/2]       [nil 0])))
    (all :part :crash)))
 
 (def perc-melody-generic
@@ -104,6 +104,99 @@
 (def perc-part-generic
   (->>
    perc-melody-generic
+   (tempo (bpm BPM))))
+
+
+;; SYNCOPATED
+;; -------
+
+;;  |1e&a2e&a3e&a4e&a|1e&a2e&a3e&a4e&a|
+;; C|----------------|--------------0-|
+;; H|--0---0---0---0-|--0---0---0-----|
+;; S|----0-------0---|----0-------0---|
+;; B|0-----0-----0---|--0-----0---0---|
+;
+(def kick-melody-syncopated
+  (->>
+   ()
+   (then (times 4 (phrase [1/4 1/4 1]          [0 nil nil])))
+   (then (times 2 (phrase [1/4 1/4 1/2]        [0 nil nil])))
+   (all :part :kick)))
+
+(def snare-melody-syncopated
+  (->>
+   ()
+   (then (times 4 (phrase [1 1/4 3/4]      [nil 0 nil])))
+   (all :part :snare)))
+
+(def hat-melody-syncopated
+  (->>
+   ()
+   (then (times 7 (phrase [1/2 1/2]       [nil 0])))
+   (then (times 1 (phrase [1]             [nil])))
+   (all :part :hat)))
+
+(def crash-melody-syncopated
+  (->>
+   ()
+   (then (times 7 (phrase [1] [nil])))
+   (then (times 1 (phrase [1/2 1/2]       [nil 0])))
+   (all :part :crash)))
+
+(def perc-melody-syncopated
+  (->>
+   (with kick-melody-syncopated snare-melody-syncopated hat-melody-syncopated crash-melody-syncopated)))
+
+(def perc-part-syncopated
+  (->>
+   perc-melody-syncopated
+   (tempo (bpm BPM))))
+
+;; SYNCOPATED2
+;; -------
+
+;;  |1e&a2e&a3e&a4e&a|1e&a2e&a3e&a4e&a|
+;; C|----------------|--------------0-|
+;; H|--0---0---0---0-|--0---0---0-----|
+;; S|----0-------0---|----0-------0---|
+;; B|0-----0-----0---|0-----0-----0---|
+;
+(def kick-melody-syncopated2
+  (->>
+   ()
+   (then (times 2 (phrase [1/4 1/4 1]          [0 nil nil])))
+   (then (times 1 (phrase [1/4 1/4 1/2]        [0 nil nil])))
+   (then (times 2 (phrase [1/4 1/4 1]          [0 nil nil])))
+   (then (times 1 (phrase [1/4 1/4 1/2]        [0 nil nil])))
+   (all :part :kick)))
+
+(def snare-melody-syncopated2
+  (->>
+   ()
+   (then (times 4 (phrase [1 1/4 3/4]      [nil 0 nil])))
+   (all :part :snare)))
+
+(def hat-melody-syncopated2
+  (->>
+   ()
+   (then (times 7 (phrase [1/2 1/2]       [nil 0])))
+   (then (times 1 (phrase [1]             [nil])))
+   (all :part :hat)))
+
+(def crash-melody-syncopated2
+  (->>
+   ()
+   (then (times 7 (phrase [1] [nil])))
+   (then (times 1 (phrase [1/2 1/2]       [nil 0])))
+   (all :part :crash)))
+
+(def perc-melody-syncopated2
+  (->>
+   (with kick-melody-syncopated2 snare-melody-syncopated2 hat-melody-syncopated2 crash-melody-syncopated2)))
+
+(def perc-part-syncopated2
+  (->>
+   perc-melody-syncopated2
    (tempo (bpm BPM))))
 
 
@@ -163,6 +256,8 @@
   (live/jam (var track))
   (live/jam (var perc-part-only))
   (live/jam (var perc-part-generic))
+  (live/jam (var perc-part-syncopated))
+  (live/jam (var perc-part-syncopated2))
   (live/jam (var bass-part)))
 (comment
  (live/stop))
