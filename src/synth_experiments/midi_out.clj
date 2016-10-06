@@ -9,6 +9,11 @@
    [leipzig.temperament :as temperament]
    [overtone.studio.midi :as studio_midi]))
 
+;; PERC
+;; ===
+
+;; ONLY
+;; ----
 
 ;;  |1e&a2e&a3e&a4e&a|1e&a2e&a3e&a4e&a|
 ;; C|--------------0-|--------------0-|
@@ -16,37 +21,87 @@
 ;; S|----0-------0---|----0------00---|
 ;; B|0---0---0---0---|0---0---0-----0-|
 
-(def kick-melody
+(def kick-melody-only
   (->>
-   (phrase (concat (take 14 (cycle [1/4 3/4 1/4 3/4])) [1/4 1/4 1/4 1/4])
-           (concat (take 14 (cycle [  0 nil   1 nil])) [  1 nil   1 nil]))
+   ()
+   (then (times 7 (phrase [1/4 3/4]        [0 nil])))
+   (then (times 1 (phrase [1/2 1/4 1/4]    [nil 0 nil])))
    (all :part :kick)))
 
-(def snare-melody
+(def snare-melody-only
   (->>
-   (phrase (concat [  1] (take 5 (cycle [1/4 7/4])) [6/4 1/4 1/4 3/4])
-           (concat [nil] (take 5 (cycle [  0 nil])) [nil   0   0 nil]))
+   ()
+   (then (times 3 (phrase [1 1/4 3/4]      [nil 0 nil])))
+   (then (times 1 (phrase [3/4 1/4]        [nil 0])))
+   (then (times 1 (phrase [1/4 3/4]        [0 nil])))
    (all :part :snare)))
 
-(def hat-melody
+(def hat-melody-only
   (->>
-   (phrase (take 16 (repeat 1/2))
-           (interleave (repeat nil) (cycle [0 0 0 nil])))
+   ()
+   (then (times 7 (phrase [1/2 1/2]       [nil 0])))
+   (then (times 1 (phrase [1]       [nil])))
    (all :part :hat)))
 
-(def crash-melody
+(def crash-melody-only
   (->>
-   (phrase (take 16 (repeat 1/2))
-           (interleave (repeat nil) (cycle [nil nil nil 0])))
+   ()
+   (then (times 7 (phrase [1] [nil])))
+   (then (times 1 (phrase [1/2 1/2] [nil 0])))
    (all :part :crash)))
+
+(def perc-melody-only
+  (->>
+   (with kick-melody-only snare-melody-only hat-melody-only crash-melody-only)))
+
+
+;; GENERIC
+;; -------
+
+;;  |1e&a2e&a3e&a4e&a|1e&a2e&a3e&a4e&a|
+;; C|----------------|--------------0-|
+;; H|--0---0---0---0-|--0---0---0-----|
+;; S|----0-------0---|----0-------0---|
+;; B|0-------0-------|0-------0-------|
+;
+; (def kick-melody-generic
+;   (->>
+;    (phrase (concat (take 14 (cycle [1/4 3/4 1/4 3/4])) [1/4 1/4 1/4 1/4])
+;            (concat (take 14 (cycle [  0 nil   1 nil])) [  1 nil   1 nil]))
+;    (all :part :kick)))
+;
+; (def snare-melody-generic
+;   (->>
+;    (phrase (concat [  1] (take 5 (cycle [1/4 7/4])) [6/4 1/4 1/4 3/4])
+;            (concat [nil] (take 5 (cycle [  0 nil])) [nil   0   0 nil]))
+;    (all :part :snare)))
+;
+; (def hat-melody-generic
+;   (->>
+;    (phrase (take 16 (repeat 1/2))
+;            (interleave (repeat nil) (cycle [0 0 0 nil])))
+;    (all :part :hat)))
+;
+; (def crash-melody-generic
+;   (->>
+;    (phrase (take 16 (repeat 1/2))
+;            (interleave (repeat nil) (cycle [nil nil nil 0])))
+;    (all :part :crash)))
+;
+; (def perc-melody-generic
+;   (->>
+;    (with kick-melody-generic snare-melody-generic hat-melody-generic crash-melody-generic)))
 
 (def BPM 120)
 
-(def perc-part
+(def perc-part-only
   (->>
-   (with kick-melody snare-melody hat-melody crash-melody)
+   perc-melody-only
    (tempo (bpm BPM))))
 
+
+;; BASS
+;; ====
 
 ;;  |1e&a2e&a3e&a4e&a|1e&a2e&a3e&a4e&a|
 ;;+3|----------------|------0---------|
@@ -68,8 +123,8 @@
 (def bass-part
   (->>
    (mapthen bassline progression)
-   (where :pitch (comp scale/B scale/minor))
-   (tempo (bpm BPM))))
+   (where :pitch (comp scale/B scale/minor))))
+  ;  (tempo (bpm BPM))))
 
 (let [receiver (first (filter #(= (:description %) "Circuit")
                               (studio_midi/midi-connected-receivers)))]
@@ -93,11 +148,13 @@
 (def track
   (->>
    bass-part
-   (with (times (count progression) perc-part))))
+   (with (times 6 perc-melody-only))
+   (tempo (bpm BPM))))
+
 
 (comment
   (live/jam (var track))
-  (live/jam (var perc-part))
+  (live/jam (var perc-part-only))
   (live/jam (var bass-part)))
 (comment
  (live/stop))
