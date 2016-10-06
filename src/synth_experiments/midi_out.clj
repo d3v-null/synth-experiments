@@ -9,6 +9,8 @@
    [leipzig.temperament :as temperament]
    [overtone.studio.midi :as studio_midi]))
 
+(def BPM 120)
+
 ;; PERC
 ;; ===
 
@@ -54,6 +56,11 @@
   (->>
    (with kick-melody-only snare-melody-only hat-melody-only crash-melody-only)))
 
+(def perc-part-only
+  (->>
+   perc-melody-only
+   (tempo (bpm BPM))))
+
 
 ;; GENERIC
 ;; -------
@@ -64,39 +71,39 @@
 ;; S|----0-------0---|----0-------0---|
 ;; B|0-------0-------|0-------0-------|
 ;
-; (def kick-melody-generic
-;   (->>
-;    (phrase (concat (take 14 (cycle [1/4 3/4 1/4 3/4])) [1/4 1/4 1/4 1/4])
-;            (concat (take 14 (cycle [  0 nil   1 nil])) [  1 nil   1 nil]))
-;    (all :part :kick)))
-;
-; (def snare-melody-generic
-;   (->>
-;    (phrase (concat [  1] (take 5 (cycle [1/4 7/4])) [6/4 1/4 1/4 3/4])
-;            (concat [nil] (take 5 (cycle [  0 nil])) [nil   0   0 nil]))
-;    (all :part :snare)))
-;
-; (def hat-melody-generic
-;   (->>
-;    (phrase (take 16 (repeat 1/2))
-;            (interleave (repeat nil) (cycle [0 0 0 nil])))
-;    (all :part :hat)))
-;
-; (def crash-melody-generic
-;   (->>
-;    (phrase (take 16 (repeat 1/2))
-;            (interleave (repeat nil) (cycle [nil nil nil 0])))
-;    (all :part :crash)))
-;
-; (def perc-melody-generic
-;   (->>
-;    (with kick-melody-generic snare-melody-generic hat-melody-generic crash-melody-generic)))
-
-(def BPM 120)
-
-(def perc-part-only
+(def kick-melody-generic
   (->>
-   perc-melody-only
+   ()
+   (then (times 4 (phrase [1/4 3/4 1]        [0 nil nil])))
+   (all :part :kick)))
+
+(def snare-melody-generic
+  (->>
+   ()
+   (then (times 4 (phrase [1 1/4 3/4]      [nil 0 nil])))
+   (all :part :snare)))
+
+(def hat-melody-generic
+  (->>
+   ()
+   (then (times 7 (phrase [1/2 1/2]       [nil 0])))
+   (then (times 1 (phrase [1]       [nil])))
+   (all :part :hat)))
+
+(def crash-melody-generic
+  (->>
+   ()
+   (then (times 7 (phrase [1] [nil])))
+   (then (times 1 (phrase [1/2 1/2] [nil 0])))
+   (all :part :crash)))
+
+(def perc-melody-generic
+  (->>
+   (with kick-melody-generic snare-melody-generic hat-melody-generic crash-melody-generic)))
+
+(def perc-part-generic
+  (->>
+   perc-melody-generic
    (tempo (bpm BPM))))
 
 
@@ -155,6 +162,7 @@
 (comment
   (live/jam (var track))
   (live/jam (var perc-part-only))
+  (live/jam (var perc-part-generic))
   (live/jam (var bass-part)))
 (comment
  (live/stop))
