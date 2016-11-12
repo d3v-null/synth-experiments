@@ -9,7 +9,12 @@
    [leipzig.temperament :as temperament]
    [overtone.studio.midi :as studio_midi]))
 
-(def BPM 120)
+;; shows descriptions of all connected receivers
+
+(comment
+ (map #(:description %) (studio_midi/midi-connected-receivers)))
+
+(def BPM 190)
 
 ;; PERC
 ;; ===
@@ -220,13 +225,24 @@
        (where :pitch (comp scale/lower scale/lower))
        (all :part :bass)))
 
-(def bass-part
+(def bass-melody
   (->>
    (mapthen bassline progression)
    (where :pitch (comp scale/B scale/minor))))
-  ;  (tempo (bpm BPM))))
 
-(let [receiver (first (filter #(= (:description %) "Circuit")
+(def bass-part
+  (->>
+   bass-melody
+   (tempo (bpm BPM))))
+
+; (def output_device_search "Circuit")
+(def output_device_search "Ableton")
+; (def output_device_search "Twitch")
+
+(first (filter #(.contains (:description %) output_device_search)
+               (studio_midi/midi-connected-receivers)))
+
+(let [receiver (first (filter #(.contains (:description %) output_device_search)
                               (studio_midi/midi-connected-receivers)))]
   ; (assert (= (:description receiver) "Circuit") "Not sending to Circuit")
   (defmethod live/play-note :kick [{midi :pitch dur :duration}]

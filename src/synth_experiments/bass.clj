@@ -50,10 +50,22 @@
     19 [:amp-rel  inv-divide127]
     20 [:exp      inv-divide127]})
 
+
+(def bass-mapping-mk255c
+  {10 [:detune divide127]
+   11 [:exp divide127]
+   91 [:lpf-att divide127]
+   93 [:lpf-rel divide127]
+   73 [:amp-att divide127]
+   72 [:amp-rel divide127]
+   74 [:cutoff divide127]
+   71 [:mix divide127]})
+
+
 (comment
   (scope :audio-bus 1)
   (def bass-state (atom {}))
   (def bass-midi-player
-    (setup-inst-midi bass-patch bass-mapping bass-state))
+    (setup-inst-midi bass-patch bass-mapping-mk255c bass-state))
   (midi-player-stop bass-player)
   (comment))

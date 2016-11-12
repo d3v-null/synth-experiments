@@ -18,6 +18,6 @@
   (def piano-state (atom {:sustain 0.0}))
   (def piano-midi-player
     (setup-inst-midi piano piano-mapping piano-state))
-  (swap! piano-state assoc :sustain 1.0)
+  (swap! piano-state assoc :sustain 0.0)
   (midi-player-stop piano-midi-player)
   (comment))
